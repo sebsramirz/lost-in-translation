@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lost in Translation — Metanoia | Sciences Po</title>
+<meta name="description" content="Cultural Distortion in Generative AI Outputs across Latin America and Southeast Asia" />
+
+<!-- Fonts: Fraunces (display serif) + Newsreader (body serif) + JetBrains Mono (accents) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Newsreader:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Fraunces', 'serif'],
+          body: ['Newsreader', 'serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        colors: {
+          paper: '#f4efe6',
+          paperdark: '#ebe4d5',
+          ink: '#1a1814',
+          accent: '#c14b1f',
+          muted: '#6b6358',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: #f4efe6;
+    color: #1a1814;
+    font-family: 'Newsreader', serif;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  /* Subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.07 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+
+  .display { font-family: 'Fraunces', serif; font-optical-sizing: auto; font-variation-settings: "SOFT" 50, "WONK" 0; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Fractured / displaced text effect for hero */
+  .fracture {
+    position: relative;
+    display: inline-block;
+  }
+  .fracture::before,
+  .fracture::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .fracture::before {
+    color: #c14b1f;
+    transform: translate(3px, -2px);
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+  }
+  .fracture::after {
+    color: #1a1814;
+    transform: translate(-2px, 1px);
+    mix-blend-mode: multiply;
+    opacity: 0.85;
+  }
+
+  /* Section dividers */
+  .rule {
+    border-top: 1px solid #1a1814;
+    position: relative;
+  }
+  .rule::after {
+    content: "✦";
+    position: absolute;
+    top: -0.7em;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f4efe6;
+    padding: 0 0.8em;
+    color: #c14b1f;
+    font-size: 0.9rem;
+  }
+
+  /* Diptych frame */
+  .diptych {
+    position: relative;
+    background: #ebe4d5;
+    border: 1px solid #1a1814;
+    overflow: hidden;
+  }
+  .diptych::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: #1a1814;
+    z-index: 2;
+  }
+  .diptych-img {
+    aspect-ratio: 1 / 1;
+    background: #d8cfbb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b6358;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  /* Heatmap cells */
+  .cell {
+    aspect-ratio: 1.4 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #1a1814;
+    border: 1px solid rgba(26, 24, 20, 0.15);
+  }
+  .s1 { background: #e8dcc4; }
+  .s2 { background: #e0b896; }
+  .s3 { background: #d68f64; color: #1a1814; }
+  .s4 { background: #c14b1f; color: #f4efe6; }
+  .s5 { background: #7a2810; color: #f4efe6; }
+
+  /* Pipeline arrows */
+  .arrow {
+    position: relative;
+    flex-shrink: 0;
+    color: #c14b1f;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Animation on load */
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal { animation: riseIn 0.9s cubic-bezier(0.2, 0.6, 0.2, 1) both; }
+  .d1 { animation-delay: 0.1s; }
+  .d2 { animation-delay: 0.25s; }
+  .d3 { animation-delay: 0.4s; }
+  .d4 { animation-delay: 0.55s; }
+
+  /* Marquee */
+  @keyframes scroll-x {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee {
+    display: flex;
+    width: max-content;
+    animation: scroll-x 40s linear infinite;
+  }
+
+  /* Drop cap */
+  .dropcap::first-letter {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 4.5em;
+    line-height: 0.85;
+    float: left;
+    margin: 0.05em 0.1em 0 0;
+    color: #c14b1f;
+  }
+
+  /* Table */
+  .policy-table th, .policy-table td {
+    border-bottom: 1px solid rgba(26, 24, 20, 0.2);
+    padding: 0.85rem 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .policy-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b6358;
+    border-bottom: 2px solid #1a1814;
+  }
+  .badge { display: inline-block; padding: 2px 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; border-radius: 999px; }
+  .badge-yes { background: #1a1814; color: #f4efe6; }
+  .badge-no { background: transparent; color: #1a1814; border: 1px solid #1a1814; }
+  .badge-partial { background: #c14b1f; color: #f4efe6; }
+
+  /* Content max width */
+  .content { max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+  /* Mobile fixes */
+  @media (max-width: 768px) {
+    .heatmap-grid { font-size: 0.7rem; }
+    .cell { font-size: 0.7rem; }
+  }
+</style>
+</head>
+<body class="relative">
+
+<div class="relative z-10">
+
+<!-- ============================== TOP BAR ============================== -->
+<header class="border-b border-ink/20 bg-paper/80 backdrop-blur-sm sticky top-0 z-50">
+  <div class="content px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="mono text-xs tracking-widest uppercase text-muted">Sciences Po · 2025</span>
+      <span class="hidden md:inline mono text-xs text-muted">/ Digital & AI Challenges</span>
+    </div>
+    <nav class="hidden md:flex gap-6 mono text-xs uppercase tracking-wider">
+      <a href="#methods" class="hover:text-accent transition">Methods</a>
+      <a href="#results" class="hover:text-accent transition">Results</a>
+      <a href="#policy" class="hover:text-accent transition">Policy</a>
+      <a href="#findings" class="hover:text-accent transition">Findings</a>
+      <a href="#refs" class="hover:text-accent transition">References</a>
+    </nav>
+    <span class="mono text-xs text-accent">● METANOIA</span>
+  </div>
+</header>
+
+<!-- ============================== HERO ============================== -->
+<section class="content px-6 pt-16 md:pt-24 pb-20">
+  <div class="reveal d1 mono text-xs tracking-[0.3em] uppercase text-muted mb-6">A Research Report</div>
+
+  <h1 class="reveal d2 display font-light text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8">
+    Lost in<br>
+    <span class="fracture italic font-normal" data-text="Translation">Translation</span>
+  </h1>
+
+  <p class="reveal d3 display text-2xl md:text-3xl lg:text-4xl font-light italic text-ink/80 max-w-4xl leading-tight mb-10">
+    Cultural distortion in generative AI outputs across Latin America &amp; Southeast Asia.
+  </p>
+
+  <div class="reveal d4 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mono text-xs">
+    <div>
+      <div class="text-muted uppercase tracking-wider mb-1">Team</div>
+      <div class="text-ink">Metanoia</div>
+    </div>
+    <div>
+      <div class="text-muted uppercase tracking-wider mb-1">Regions</div>
+      <div class="text-ink">LatAm · SEA</div>
+    </div>
+    <div>
+      <div class="text-muted uppercase tracking-wider mb-1">Models tested</div>
+      <div class="text-ink">ChatGPT · Byteplus</div>
+    </div>
+    <div>
+      <div class="text-muted uppercase tracking-wider mb-1">Outputs coded</div>
+      <div class="text-ink">N = 24</div>
+    </div>
+  </div>
+
+  <div class="mt-12 mono text-xs text-muted">
+    María Rodríguez · Mirna Kovac · Raphaëlle Parmentier · Sebastián Ramírez Hernández
+  </div>
+</section>
+
+<!-- Marquee divider -->
+<div class="border-y border-ink/30 py-3 overflow-hidden bg-paperdark/40">
+  <div class="marquee mono text-xs uppercase tracking-widest text-ink/70">
+    <span class="px-8">Colombia</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Brazil</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Thailand</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Vietnam</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Cultural</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Religious</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Social</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Colombia</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Brazil</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Thailand</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Vietnam</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Cultural</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Religious</span><span class="px-8 text-accent">✦</span>
+    <span class="px-8">Social</span><span class="px-8 text-accent">✦</span>
+  </div>
+</div>
+
+<!-- ============================== BACKGROUND ============================== -->
+<section class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 01</div>
+      <h2 class="display text-3xl font-light leading-tight">Background</h2>
+    </div>
+    <div class="md:col-span-9">
+      <p class="dropcap text-lg md:text-xl leading-relaxed">
+        Generative AI is celebrated for efficiency and perceived neutrality, yet a growing body of research shows that it reproduces and amplifies existing inequalities. Trained on Western- and Sinocentric data, today's frontier models risk extracting Southern data only to feed it back as homogenized cultural outputs &mdash; what Couldry &amp; Mejias call <em>data colonialism</em>, accelerated by image and language models. This study tests that claim empirically across two regions embedded in distinct hegemonic tech ecosystems.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== QUESTION + HYPOTHESES ============================== -->
+<section class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 02</div>
+      <h2 class="display text-3xl font-light leading-tight">Question &amp; Hypotheses</h2>
+    </div>
+    <div class="md:col-span-9 space-y-10">
+      <div>
+        <div class="mono text-xs uppercase tracking-widest text-muted mb-3">Research Question</div>
+        <p class="display text-2xl md:text-3xl font-light italic leading-snug">
+          To what extent do generative AI systems misrepresent or homogenize culturally specific content from Latin America and Southeast Asia &mdash; and how do regional data governance frameworks address it?
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="border border-ink/30 p-6 bg-paperdark/40">
+          <div class="mono text-xs uppercase tracking-widest text-accent mb-3">H1 · Output Distortion</div>
+          <p class="leading-relaxed">Generative AI systems produce culturally distorted outputs when prompted with culturally specific content from Latin America and Southeast Asia, with variation between regions reflecting proximity to different hegemonic tech ecosystems.</p>
+        </div>
+        <div class="border border-ink/30 p-6 bg-paperdark/40">
+          <div class="mono text-xs uppercase tracking-widest text-accent mb-3">H2 · Governance Gap</div>
+          <p class="leading-relaxed">Existing regulatory frameworks in selected countries treat AI primarily as an economic issue, without addressing cultural representation in generative outputs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== METHODS / PIPELINE ============================== -->
+<section id="methods" class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8 mb-12">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 03</div>
+      <h2 class="display text-3xl font-light leading-tight">Methods</h2>
+    </div>
+    <div class="md:col-span-9">
+      <p class="text-lg leading-relaxed text-ink/85">
+        Identical prompts across three cultural dimensions were submitted in parallel to two frontier image-generation models. Outputs were coded on a 1&ndash;5 distortion scale against authentic reference material, with policy frameworks reviewed for cultural representation provisions.
+      </p>
+    </div>
+  </div>
+
+  <!-- Pipeline diagram -->
+  <div class="bg-paperdark/60 border border-ink/40 p-6 md:p-10 overflow-x-auto">
+    <div class="mono text-xs uppercase tracking-widest text-muted mb-6">Project pipeline</div>
+    <div class="flex items-stretch gap-3 md:gap-4 min-w-max">
+
+      <div class="flex flex-col justify-center w-44 md:w-52 border border-ink p-4 bg-paper">
+        <div class="mono text-[10px] uppercase tracking-widest text-accent mb-2">01 · Design</div>
+        <div class="display text-lg leading-tight">3 dimensions<br>× 4 countries</div>
+        <div class="mono text-xs text-muted mt-2">Cultural · Religious · Social</div>
+      </div>
+
+      <div class="arrow self-center text-2xl">→</div>
+
+      <div class="flex flex-col justify-center w-44 md:w-52 border border-ink p-4 bg-paper">
+        <div class="mono text-[10px] uppercase tracking-widest text-accent mb-2">02 · Prompt</div>
+        <div class="display text-lg leading-tight">Identical wording, parallel runs</div>
+        <div class="mono text-xs text-muted mt-2">ChatGPT · Byteplus</div>
+      </div>
+
+      <div class="arrow self-center text-2xl">→</div>
+
+      <div class="flex flex-col justify-center w-44 md:w-52 border border-ink p-4 bg-paper">
+        <div class="mono text-[10px] uppercase tracking-widest text-accent mb-2">03 · Capture</div>
+        <div class="display text-lg leading-tight">24 outputs<br>(image)</div>
+        <div class="mono text-xs text-muted mt-2">Including hallucinations</div>
+      </div>
+
+      <div class="arrow self-center text-2xl">→</div>
+
+      <div class="flex flex-col justify-center w-44 md:w-52 border border-ink p-4 bg-paper">
+        <div class="mono text-[10px] uppercase tracking-widest text-accent mb-2">04 · Code</div>
+        <div class="display text-lg leading-tight">1–5 distortion scale</div>
+        <div class="mono text-xs text-muted mt-2">Vs. authentic references</div>
+      </div>
+
+      <div class="arrow self-center text-2xl">→</div>
+
+      <div class="flex flex-col justify-center w-44 md:w-52 border border-accent bg-accent text-paper p-4">
+        <div class="mono text-[10px] uppercase tracking-widest text-paper/80 mb-2">05 · Analyze</div>
+        <div class="display text-lg leading-tight">Diptych +<br>Heatmap +<br>Policy review</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coding rubric -->
+  <div class="mt-12 grid md:grid-cols-5 gap-2">
+    <div class="mono text-xs uppercase tracking-widest text-muted col-span-5 mb-2">Coding rubric</div>
+    <div class="cell s1">1 · Accurate</div>
+    <div class="cell s2">2 · Mostly accurate</div>
+    <div class="cell s3">3 · Mixed</div>
+    <div class="cell s4">4 · Stereotyped</div>
+    <div class="cell s5">5 · Distorted</div>
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== VISUAL RESULTS · DIPTYCH ============================== -->
+<section id="results" class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8 mb-12">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 04</div>
+      <h2 class="display text-3xl font-light leading-tight">Visual Results</h2>
+    </div>
+    <div class="md:col-span-9">
+      <p class="display text-2xl md:text-3xl font-light italic leading-snug text-ink/80">
+        Figure 1. AI output (left) vs. authentic reference (right) &mdash; the most distorted prompt per country.
+      </p>
+    </div>
+  </div>
+
+  <!-- Diptych grid : 4 countries -->
+  <div class="grid md:grid-cols-2 gap-8">
+
+    <!-- Colombia -->
+    <figure>
+      <div class="diptych grid grid-cols-2">
+        <div class="diptych-img" data-replace="colombia-ai">
+          [ Replace: AI output<br>colombia-religious-chatgpt.png ]
+        </div>
+        <div class="diptych-img" data-replace="colombia-real">
+          [ Replace: authentic reference<br>colombia-religious-real.jpg ]
+        </div>
+      </div>
+      <figcaption class="mt-3 flex justify-between items-baseline">
+        <div>
+          <span class="mono text-xs uppercase tracking-widest text-accent">Colombia</span>
+          <span class="ml-3 text-ink/80 italic">Religious ceremony</span>
+        </div>
+        <span class="mono text-xs text-muted">Distortion · 4/5</span>
+      </figcaption>
+      <p class="mt-2 text-sm text-ink/70 leading-relaxed">
+        <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+        AI defaults to generic Catholic iconography, erasing Afro-Colombian and indigenous spiritual practice.
+      </p>
+    </figure>
+
+    <!-- Brazil -->
+    <figure>
+      <div class="diptych grid grid-cols-2">
+        <div class="diptych-img" data-replace="brazil-ai">
+          [ Replace: AI output<br>brazil-cultural-chatgpt.png ]
+        </div>
+        <div class="diptych-img" data-replace="brazil-real">
+          [ Replace: authentic reference<br>brazil-cultural-real.jpg ]
+        </div>
+      </div>
+      <figcaption class="mt-3 flex justify-between items-baseline">
+        <div>
+          <span class="mono text-xs uppercase tracking-widest text-accent">Brazil</span>
+          <span class="ml-3 text-ink/80 italic">Family holiday</span>
+        </div>
+        <span class="mono text-xs text-muted">Distortion · 4/5</span>
+      </figcaption>
+      <p class="mt-2 text-sm text-ink/70 leading-relaxed">
+        <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+        Carnival clichés override domestic family traditions; demographic skew toward white/light-skinned subjects.
+      </p>
+    </figure>
+
+    <!-- Thailand -->
+    <figure>
+      <div class="diptych grid grid-cols-2">
+        <div class="diptych-img" data-replace="thailand-ai">
+          [ Replace: AI output<br>thailand-social-chatgpt.png ]
+        </div>
+        <div class="diptych-img" data-replace="thailand-real">
+          [ Replace: authentic reference<br>thailand-social-real.jpg ]
+        </div>
+      </div>
+      <figcaption class="mt-3 flex justify-between items-baseline">
+        <div>
+          <span class="mono text-xs uppercase tracking-widest text-accent">Thailand</span>
+          <span class="ml-3 text-ink/80 italic">Working-class street</span>
+        </div>
+        <span class="mono text-xs text-muted">Distortion · 5/5</span>
+      </figcaption>
+      <p class="mt-2 text-sm text-ink/70 leading-relaxed">
+        <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+        Tourist-postcard tropes (tuk-tuks, temples) replace ordinary urban life; Bangkok rendered as theme park.
+      </p>
+    </figure>
+
+    <!-- Vietnam -->
+    <figure>
+      <div class="diptych grid grid-cols-2">
+        <div class="diptych-img" data-replace="vietnam-ai">
+          [ Replace: AI output<br>vietnam-religious-chatgpt.png ]
+        </div>
+        <div class="diptych-img" data-replace="vietnam-real">
+          [ Replace: authentic reference<br>vietnam-religious-real.jpg ]
+        </div>
+      </div>
+      <figcaption class="mt-3 flex justify-between items-baseline">
+        <div>
+          <span class="mono text-xs uppercase tracking-widest text-accent">Vietnam</span>
+          <span class="ml-3 text-ink/80 italic">Religious ceremony</span>
+        </div>
+        <span class="mono text-xs text-muted">Distortion · 4/5</span>
+      </figcaption>
+      <p class="mt-2 text-sm text-ink/70 leading-relaxed">
+        <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+        Models default to generic Buddhist temple imagery, erasing ancestor worship and folk religion that structure most Vietnamese spiritual life.
+      </p>
+    </figure>
+
+  </div>
+</section>
+
+<!-- ============================== HEATMAP ============================== -->
+<section class="content px-6 pb-20 md:pb-28">
+  <div class="grid md:grid-cols-12 gap-8 mb-10">
+    <div class="md:col-span-3"></div>
+    <div class="md:col-span-9">
+      <div class="mono text-xs uppercase tracking-widest text-muted mb-2">Figure 2</div>
+      <p class="display text-2xl md:text-3xl font-light italic leading-snug text-ink/80">
+        Distortion scores by country × dimension × model.
+      </p>
+    </div>
+  </div>
+
+  <div class="bg-paperdark/40 border border-ink/30 p-6 md:p-10 overflow-x-auto">
+    <div class="min-w-[640px]">
+
+      <!-- ChatGPT block -->
+      <div class="mb-8">
+        <div class="mono text-xs uppercase tracking-widest text-accent mb-3">ChatGPT</div>
+        <div class="grid heatmap-grid" style="grid-template-columns: 120px repeat(3, 1fr);">
+          <div></div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Cultural</div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Religious</div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Social</div>
+
+          <div class="mono text-xs flex items-center pr-3">Colombia</div>
+          <div class="cell s3">3</div><div class="cell s4">4</div><div class="cell s3">3</div>
+
+          <div class="mono text-xs flex items-center pr-3">Brazil</div>
+          <div class="cell s4">4</div><div class="cell s3">3</div><div class="cell s3">3</div>
+
+          <div class="mono text-xs flex items-center pr-3">Thailand</div>
+          <div class="cell s4">4</div><div class="cell s4">4</div><div class="cell s5">5</div>
+
+          <div class="mono text-xs flex items-center pr-3">Vietnam</div>
+          <div class="cell s4">4</div><div class="cell s4">4</div><div class="cell s4">4</div>
+        </div>
+      </div>
+
+      <!-- Byteplus block -->
+      <div>
+        <div class="mono text-xs uppercase tracking-widest text-accent mb-3">Byteplus</div>
+        <div class="grid heatmap-grid" style="grid-template-columns: 120px repeat(3, 1fr);">
+          <div></div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Cultural</div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Religious</div>
+          <div class="mono text-[10px] uppercase tracking-widest text-muted text-center pb-2">Social</div>
+
+          <div class="mono text-xs flex items-center pr-3">Colombia</div>
+          <div class="cell s4">4</div><div class="cell s5">5</div><div class="cell s4">4</div>
+
+          <div class="mono text-xs flex items-center pr-3">Brazil</div>
+          <div class="cell s4">4</div><div class="cell s4">4</div><div class="cell s4">4</div>
+
+          <div class="mono text-xs flex items-center pr-3">Thailand</div>
+          <div class="cell s3">3</div><div class="cell s3">3</div><div class="cell s3">3</div>
+
+          <div class="mono text-xs flex items-center pr-3">Vietnam</div>
+          <div class="cell s2">2</div><div class="cell s3">3</div><div class="cell s3">3</div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="mt-8 flex flex-wrap items-center gap-2 mono text-[10px] uppercase tracking-widest text-muted">
+        <span>Less distortion</span>
+        <div class="flex">
+          <div class="cell s1 w-8 h-5">1</div>
+          <div class="cell s2 w-8 h-5">2</div>
+          <div class="cell s3 w-8 h-5">3</div>
+          <div class="cell s4 w-8 h-5">4</div>
+          <div class="cell s5 w-8 h-5">5</div>
+        </div>
+        <span>More distortion</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="mt-4 text-sm text-ink/70 leading-relaxed max-w-3xl">
+    <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+    Distortion is patterned, not random: ChatGPT performs worse on Southeast Asian content, while Byteplus &mdash; built within the ByteDance ecosystem &mdash; shows the inverse, with higher distortion on Latin American content. The pattern tracks each model's hegemonic tech sphere of influence, consistent with H1.
+  </p>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== POLICY TABLE ============================== -->
+<section id="policy" class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8 mb-10">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 05</div>
+      <h2 class="display text-3xl font-light leading-tight">Policy Landscape</h2>
+    </div>
+    <div class="md:col-span-9">
+      <div class="mono text-xs uppercase tracking-widest text-muted mb-2">Figure 3</div>
+      <p class="display text-2xl md:text-3xl font-light italic leading-snug text-ink/80">
+        Do existing AI frameworks address cultural representation?
+      </p>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="policy-table w-full">
+      <thead>
+        <tr>
+          <th>Country / Instrument</th>
+          <th>National AI strategy</th>
+          <th>Cultural representation</th>
+          <th>Data sovereignty</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="mono text-xs text-accent uppercase tracking-widest">Colombia</div>
+            <div>CONPES 3975 (2019)</div>
+          </td>
+          <td><span class="badge badge-yes">Yes</span></td>
+          <td><span class="badge badge-no">No</span></td>
+          <td><span class="badge badge-partial">Partial</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="mono text-xs text-accent uppercase tracking-widest">Brazil</div>
+            <div>PL 2338/2023 (AI Bill)</div>
+          </td>
+          <td><span class="badge badge-yes">Yes</span></td>
+          <td><span class="badge badge-partial">Partial</span></td>
+          <td><span class="badge badge-yes">Yes</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="mono text-xs text-accent uppercase tracking-widest">Thailand</div>
+            <div>ETDA AI Ethics Guidelines</div>
+          </td>
+          <td><span class="badge badge-yes">Yes</span></td>
+          <td><span class="badge badge-no">No</span></td>
+          <td><span class="badge badge-partial">Partial</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="mono text-xs text-accent uppercase tracking-widest">Vietnam</div>
+            <div>Decision 127/QD-TTg (2030)</div>
+          </td>
+          <td><span class="badge badge-yes">Yes</span></td>
+          <td><span class="badge badge-no">No</span></td>
+          <td><span class="badge badge-yes">Yes</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="mt-4 text-sm text-ink/70 leading-relaxed max-w-3xl">
+    <span class="mono text-[10px] uppercase tracking-widest text-accent">Takeaway · </span>
+    All four frameworks treat AI primarily as an economic and infrastructural concern. None contains binding provisions for cultural representation in generative model outputs &mdash; supporting H2.
+  </p>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== FINDINGS ============================== -->
+<section id="findings" class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 06</div>
+      <h2 class="display text-3xl font-light leading-tight">Findings</h2>
+    </div>
+    <div class="md:col-span-9 space-y-8">
+
+      <div class="flex gap-6">
+        <div class="display text-5xl text-accent font-light leading-none flex-shrink-0">01</div>
+        <div>
+          <h3 class="display text-xl font-medium mb-2">Distortion is patterned, not uniform.</h3>
+          <p class="text-ink/80 leading-relaxed">All 24 outputs scored 3 or higher on the rubric, but error clusters predictably. Models default to globally legible clichés (Carnival, tuk-tuks, generic Catholicism) when local specificity is required.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-6">
+        <div class="display text-5xl text-accent font-light leading-none flex-shrink-0">02</div>
+        <div>
+          <h3 class="display text-xl font-medium mb-2">Hegemonic proximity reduces error.</h3>
+          <p class="text-ink/80 leading-relaxed">ChatGPT performs noticeably better on Latin America than on Southeast Asia; Byteplus shows the inverse pattern. Cultural fidelity tracks the geography of training data and the political economy of the lab behind the model.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-6">
+        <div class="display text-5xl text-accent font-light leading-none flex-shrink-0">03</div>
+        <div>
+          <h3 class="display text-xl font-medium mb-2">Governance treats AI as economic, not cultural.</h3>
+          <p class="text-ink/80 leading-relaxed">None of the four national frameworks reviewed contains binding language on cultural representation in generative outputs. The cultural dimension of AI policy remains largely undefended.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== IMPLICATIONS + LIMITATIONS ============================== -->
+<section class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-2 gap-12">
+
+    <div>
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 07</div>
+      <h2 class="display text-3xl font-light leading-tight mb-6">Implications</h2>
+      <ul class="space-y-4 text-ink/85 leading-relaxed">
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span><strong class="display font-medium">Policy.</strong> National AI strategies in the Global South should explicitly mandate cultural impact assessments for generative systems and require representation benchmarks before public-sector adoption.</span></li>
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span><strong class="display font-medium">Practice.</strong> Region-led benchmarks &mdash; built by communities, not labs &mdash; are needed to evaluate models on local fidelity, not only on global tasks.</span></li>
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span><strong class="display font-medium">Research.</strong> Future work should expand the corpus, test open-source and regional models, and integrate native-speaker coders for inter-rater reliability.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 08</div>
+      <h2 class="display text-3xl font-light leading-tight mb-6">Limitations</h2>
+      <ul class="space-y-4 text-ink/85 leading-relaxed">
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span>Small N (24 outputs); single run per prompt with no temperature control.</span></li>
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span>English-language prompts may themselves bias outputs toward Anglophone reference frames.</span></li>
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span>Coder subjectivity in distortion scoring; no formal inter-rater reliability test.</span></li>
+        <li class="flex gap-3"><span class="text-accent mono text-xs mt-1.5">▸</span><span>Policy review limited to publicly available, English/Spanish/Portuguese-translated documents.</span></li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== REFERENCES ============================== -->
+<section id="refs" class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 09</div>
+      <h2 class="display text-3xl font-light leading-tight">References</h2>
+    </div>
+    <div class="md:col-span-9">
+      <ol class="space-y-4 text-ink/85 leading-relaxed">
+        <li class="flex gap-4"><span class="mono text-xs text-accent flex-shrink-0 mt-1">[1]</span><span>Couldry, N., &amp; Mejias, U. A. (2018). Data colonialism: Rethinking big data's relation to the contemporary subject. <em>Television &amp; New Media</em>, 20(4), 336–349.</span></li>
+        <li class="flex gap-4"><span class="mono text-xs text-accent flex-shrink-0 mt-1">[2]</span><span>Tomlinson, J. (1991). <em>Cultural imperialism: A critical introduction.</em> Pinter Publishers.</span></li>
+        <li class="flex gap-4"><span class="mono text-xs text-accent flex-shrink-0 mt-1">[3]</span><span>Hagerty, A., &amp; Rubinov, I. (2019). Global AI Ethics: A review of the social impacts and ethical implications of artificial intelligence. <em>arXiv:1907.07892</em>.</span></li>
+        <li class="flex gap-4"><span class="mono text-xs text-accent flex-shrink-0 mt-1">[4]</span><span>Ghozali, I. F. (2025). Decolonizing algorithms: Artificial intelligence bias and digital colonialism in global south AI governance. <em>Jurnal Nawala Politika</em>, 3(1), 77–92.</span></li>
+        <li class="flex gap-4"><span class="mono text-xs text-accent flex-shrink-0 mt-1">[5]</span><span>UNESCO. (2024). <em>Addressing digital colonialism: A path to equitable data governance.</em> UNESCO Inclusive Policy Lab.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<div class="content px-6"><div class="rule"></div></div>
+
+<!-- ============================== AI USAGE + FOOTER ============================== -->
+<section class="content px-6 py-20 md:py-28">
+  <div class="grid md:grid-cols-12 gap-8">
+    <div class="md:col-span-3">
+      <div class="mono text-xs uppercase tracking-widest text-accent mb-2">§ 10</div>
+      <h2 class="display text-3xl font-light leading-tight">AI Usage</h2>
+    </div>
+    <div class="md:col-span-9 space-y-4 text-ink/85 leading-relaxed">
+      <p>Generative AI was used in two clearly delimited ways, both integral to the methodology:</p>
+      <p><strong class="display font-medium">(1) As the object of study.</strong> ChatGPT and Byteplus were prompted with culturally specific prompts across three dimensions; all image outputs &mdash; including hallucinations &mdash; were preserved and coded.</p>
+      <p><strong class="display font-medium">(2) As an analytical aid.</strong> AI assisted with structuring policy notes and drafting visual materials. All AI-generated content was reviewed, verified, and edited by team members. No AI output was used as evidence without independent verification.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="border-t border-ink/30 mt-12 py-10">
+  <div class="content px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div>
+      <div class="display text-2xl">Metanoia</div>
+      <div class="mono text-xs text-muted mt-1">Sciences Po · Digital &amp; AI Challenges · 2025</div>
+    </div>
+    <div class="mono text-xs text-muted leading-relaxed">
+      María Rodríguez · Mirna Kovac<br>
+      Raphaëlle Parmentier · Sebastián Ramírez Hernández
+    </div>
+    <div class="mono text-[10px] uppercase tracking-widest text-accent">
+      ✦ End of report ✦
+    </div>
+  </div>
+</footer>
+
+</div><!-- /z-10 -->
+</body>
+</html>
